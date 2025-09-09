@@ -1,318 +1,174 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Overlay Composer — Image + Rounded Slot + Text</title>
-<style>
-  :root{
-    --ui-bg:#0f1115; --ui-2:#151922; --ui-3:#1e2430; --ui-4:#2a3242; --ui-ac:#5cc8ff; --ui-t:#e6eef7;
-    --handle:#5cc8ff; --handle-bg:#0f1115aa;
-  }
-  *{box-sizing:border-box}
-  body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial; background:var(--ui-bg); color:var(--ui-t)}
-  .app{display:grid; grid-template-columns:360px 1fr; min-height:100vh}
-  .panel{background:var(--ui-2); border-right:1px solid var(--ui-3); padding:16px; overflow:auto}
-  .panel h2{font-size:16px; margin:16px 0 8px}
-  .panel .group{border:1px solid var(--ui-3); border-radius:10px; padding:12px; margin-bottom:12px; background:var(--ui-2)}
-  label{display:block; font-size:12px; opacity:.9; margin:6px 0}
-  input[type="file"]{width:100%}
-  input[type="range"], input[type="text"], input[type="color"], select, textarea{width:100%}
-  .canvas-wrap{position:relative; background:#0a0a0a; display:flex; align-items:center; justify-content:center; overflow:auto}
-  .stage{position:relative; background:#000; box-shadow:0 0 0 1px var(--ui-3) inset}
-  .stage img.base{display:block; width:100%; height:100%; object-fit:contain; background:#000}
-  /* Общие классы для перетаскиваемых блоков */
-  .draggable{position:absolute; user-select:none}
-  .resizable{outline:1px dashed var(--handle); outline-offset:-1px}
-  .resizable .handle{position:absolute; width:12px; height:12px; border:2px solid var(--handle); background:var(--handle-bg); border-radius:50%}
-  .handle.nw{left:-6px; top:-6px; cursor:nwse-resize}
-  .handle.ne{right:-6px; top:-6px; cursor:nesw-resize}
-  .handle.sw{left:-6px; bottom:-6px; cursor:nesw-resize}
-  .handle.se{right:-6px; bottom:-6px; cursor:nwse-resize}
-  /* Слот для второй картинки (фон) */
-  #slot{overflow:hidden; background:#111; display:flex; align-items:center; justify-content:center}
-  #slot img{width:100%; height:100%; object-fit:cover; pointer-events:none}
-  /* Текстовый блок */
-  #textBox{padding:8px 12px; white-space:pre-wrap; line-height:1.2; min-width:120px; min-height:40px; background:transparent}
-  /* Хелп */
-  .hint{font-size:12px; color:#a7b7cc}
-  button{background:var(--ui-4); color:var(--ui-t); border:1px solid var(--ui-3); padding:8px 10px; border-radius:8px; cursor:pointer}
-  button:hover{border-color:var(--ui-ac)}
-  .row{display:flex; gap:8px}
-  .row > *{flex:1}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Insta-tool Mobile</title>
+  <style>
+    /* Общий стиль */
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(180deg, #141e30, #243b55);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: #111a2c;
+      padding: 16px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    main {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    h2 {
+      font-size: 16px;
+      margin: 0 0 10px;
+      opacity: 0.9;
+    }
+    input[type="file"], input[type="range"] {
+      width: 100%;
+      margin-top: 8px;
+    }
+    .preview {
+      margin-top: 12px;
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      transition: border-radius 0.2s ease;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #5cc8ff, #a855f7);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    footer {
+      text-align: center;
+      padding: 12px;
+      font-size: 12px;
+      opacity: 0.6;
+    }
+  </style>
 </head>
 <body>
-<div class="app">
-  <!-- Панель управления -->
-  <aside class="panel">
-    <h2>1) Изображения</h2>
-    <div class="group">
-      <label>Базовая картинка (фон сцены)</label>
-      <input id="baseInput" type="file" accept="image/*" />
-      <label style="margin-top:10px">Размер сцены (px)</label>
-      <div class="row">
-        <input id="stageW" type="number" min="320" value="1080" />
-        <input id="stageH" type="number" min="320" value="1350" />
-      </div>
-      <small class="hint">Подходит для Instagram-каруселей (1080×1350) или YouTube (1920×1080).</small>
+  <header>📱 Insta-tool Mobile</header>
+  <main>
+    <!-- Загрузка -->
+    <div class="card">
+      <h2>1. Загрузите картинку</h2>
+      <input type="file" id="uploader" accept="image/*">
+      <img id="preview" class="preview" alt="preview" />
     </div>
 
-    <div class="group">
-      <label>Картинка для слота (вставляется в закруглённую область)</label>
-      <input id="slotInput" type="file" accept="image/*" />
-      <label>Скругление слота (радиус)</label>
-      <input id="radius" type="range" min="0" max="50" value="16" />
-      <div class="row">
-        <button id="slotFront">Слот — поверх</button>
-        <button id="slotBack">Слот — под текст</button>
-      </div>
+    <!-- Скругление -->
+    <div class="card">
+      <h2>2. Настройте скругление углов</h2>
+      <input type="range" id="radius" min="0" max="100" value="12">
     </div>
 
-    <h2>2) Текст</h2>
-    <div class="group">
-      <label>Текст</label>
-      <textarea id="textValue" rows="3" placeholder="Впиши свой текст...">Заголовок или подводка</textarea>
-      <div class="row">
-        <label>Цвет <input id="textColor" type="color" value="#ffffff"/></label>
-        <label>Размер (px) <input id="textSize" type="range" min="10" max="120" value="42"/></label>
-      </div>
-      <label>Шрифт</label>
-      <select id="fontFamily">
-        <option value="system-ui">System UI</option>
-        <option value="Arial">Arial</option>
-        <option value="Segoe UI">Segoe UI</option>
-        <option value="Roboto">Roboto</option>
-        <option value="Georgia">Georgia</option>
-        <option value="Impact">Impact</option>
-        <option value="Tahoma">Tahoma</option>
-        <option value="Verdana">Verdana</option>
-        <option value="'Courier New'">Courier New</option>
-      </select>
-      <h3 style="font-size:14px;margin:12px 0 4px">Тень текста</h3>
-      <div class="row">
-        <label>Смещение X <input id="shadowX" type="range" min="-40" max="40" value="2"/></label>
-        <label>Смещение Y <input id="shadowY" type="range" min="-40" max="40" value="4"/></label>
-      </div>
-      <div class="row">
-        <label>Blur <input id="shadowBlur" type="range" min="0" max="40" value="8"/></label>
-        <label>Цвет <input id="shadowColor" type="color" value="#000000"/></label>
-      </div>
-      <div class="row">
-        <button id="textFront">Текст — поверх</button>
-        <button id="textBack">Текст — ниже слота</button>
-      </div>
-    </div>
-
-    <div class="group">
-      <div class="row">
-        <button id="toggleGuides">Показать/скрыть рамки</button>
-        <button id="reset">Сброс позиций</button>
-      </div>
-      <small class="hint">Подсказка: перетаскивай слот и текст мышкой. Тяни за круглые точки — меняй размер.</small>
-    </div>
-  </aside>
-
-  <!-- Поле композиции -->
-  <main class="canvas-wrap">
-    <div id="stage" class="stage" style="width:1080px;height:1350px">
-      <img id="base" class="base" alt="base" />
-      <div id="slot" class="draggable resizable" style="left:80px;top:120px;width:600px;height:360px;border-radius:16px;">
-        <img id="slotImg" alt="slot" />
-        <div class="handle nw"></div><div class="handle ne"></div><div class="handle sw"></div><div class="handle se"></div>
-      </div>
-      <div id="textBox" class="draggable resizable" style="left:100px;top:520px;max-width:80%;">
-        <div class="content">Заголовок или подводка</div>
-        <div class="handle nw"></div><div class="handle ne"></div><div class="handle sw"></div><div class="handle se"></div>
-      </div>
+    <!-- Действия -->
+    <div class="card">
+      <h2>3. Экспорт</h2>
+      <button class="btn" id="downloadBtn">⬇️ Скачать картинку</button>
     </div>
   </main>
-</div>
+  <footer>© 2025 Insta-tool</footer>
 
-<script>
-(() => {
-  const $ = sel => document.querySelector(sel);
+  <script>
+    const uploader = document.getElementById('uploader');
+    const preview = document.getElementById('preview');
+    const radius = document.getElementById('radius');
+    const downloadBtn = document.getElementById('downloadBtn');
 
-  // DOM refs
-  const stage = $('#stage');
-  const baseImg = $('#base');
-  const baseInput = $('#baseInput');
-  const stageW = $('#stageW');
-  const stageH = $('#stageH');
-
-  const slot = $('#slot');
-  const slotImg = $('#slotImg');
-  const slotInput = $('#slotInput');
-  const radius = $('#radius');
-  const slotFrontBtn = $('#slotFront');
-  const slotBackBtn = $('#slotBack');
-
-  const textBox = $('#textBox');
-  const textContent = $('#textBox .content');
-  const textValue = $('#textValue');
-  const textColor = $('#textColor');
-  const textSize = $('#textSize');
-  const fontFamily = $('#fontFamily');
-  const shadowX = $('#shadowX');
-  const shadowY = $('#shadowY');
-  const shadowBlur = $('#shadowBlur');
-  const shadowColor = $('#shadowColor');
-  const textFrontBtn = $('#textFront');
-  const textBackBtn = $('#textBack');
-
-  const toggleGuidesBtn = $('#toggleGuides');
-  const resetBtn = $('#reset');
-
-  // Helpers
-  function readFileAsDataURL(file){
-    return new Promise((res, rej)=>{
-      const r = new FileReader();
-      r.onload = ()=>res(r.result);
-      r.onerror = rej;
-      r.readAsDataURL(file);
-    });
-  }
-
-  // Base image load
-  baseInput.addEventListener('change', async (e)=>{
-    const f = e.target.files?.[0];
-    if(!f) return;
-    const url = await readFileAsDataURL(f);
-    baseImg.src = url;
-  });
-
-  // Stage size
-  function resizeStage(){
-    const w = Math.max(320, parseInt(stageW.value || 0));
-    const h = Math.max(320, parseInt(stageH.value || 0));
-    stage.style.width = w+'px';
-    stage.style.height = h+'px';
-  }
-  stageW.addEventListener('input', resizeStage);
-  stageH.addEventListener('input', resizeStage);
-
-  // Slot image + radius
-  slotInput.addEventListener('change', async (e)=>{
-    const f = e.target.files?.[0];
-    if(!f) return;
-    const url = await readFileAsDataURL(f);
-    slotImg.src = url;
-  });
-  function applyRadius(){
-    const r = parseInt(radius.value);
-    slot.style.borderRadius = r + 'px';
-  }
-  radius.addEventListener('input', applyRadius);
-  applyRadius();
-
-  // Z-order
-  slotFrontBtn.addEventListener('click', ()=>{ stage.appendChild(slot); });
-  slotBackBtn.addEventListener('click', ()=>{
-    stage.insertBefore(slot, textBox); // под текстом, над базой
-  });
-  textFrontBtn.addEventListener('click', ()=>{ stage.appendChild(textBox); });
-  textBackBtn.addEventListener('click', ()=>{
-    stage.insertBefore(textBox, slot); // ниже слота, над базой
-  });
-
-  // Text bindings
-  function updateText(){
-    textContent.textContent = textValue.value;
-  }
-  function updateStyle(){
-    textContent.style.color = textColor.value;
-    textContent.style.fontSize = textSize.value + 'px';
-    textContent.style.fontFamily = fontFamily.value;
-    const sx = parseInt(shadowX.value)||0;
-    const sy = parseInt(shadowY.value)||0;
-    const sb = parseInt(shadowBlur.value)||0;
-    const sc = shadowColor.value;
-    textContent.style.textShadow = `${sx}px ${sy}px ${sb}px ${sc}`;
-  }
-  [textValue].forEach(el=>el.addEventListener('input', updateText));
-  [textColor, textSize, fontFamily, shadowX, shadowY, shadowBlur, shadowColor]
-    .forEach(el=>el.addEventListener('input', updateStyle));
-  updateText(); updateStyle();
-
-  // Drag & Resize (generic)
-  function makeDraggableResizable(el, opts={}){
-    let drag = false, resize = false, startX=0, startY=0, startLeft=0, startTop=0, startW=0, startH=0, corner=null;
-
-    // Drag start
-    el.addEventListener('mousedown', (e)=>{
-      if(e.target.classList.contains('handle')){
-        resize = true;
-        corner = e.target.classList.contains('nw')?'nw':
-                 e.target.classList.contains('ne')?'ne':
-                 e.target.classList.contains('sw')?'sw':'se';
-      }else{
-        drag = true;
+    // Загрузка картинки
+    uploader.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        preview.src = event.target.result;
       }
-      startX = e.clientX; startY = e.clientY;
-      const rect = el.getBoundingClientRect();
-      const srect = stage.getBoundingClientRect();
-      startLeft = rect.left - srect.left + stage.scrollLeft;
-      startTop  = rect.top  - srect.top  + stage.scrollTop;
-      startW = rect.width; startH = rect.height;
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-      e.preventDefault();
+      reader.readAsDataURL(file);
     });
 
-    function onMove(e){
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+    // Скругление
+    radius.addEventListener('input', () => {
+      preview.style.borderRadius = radius.value + "px";
+    });
 
-      if(drag){
-        el.style.left = (startLeft + dx) + 'px';
-        el.style.top  = (startTop  + dy) + 'px';
-      }else if(resize){
-        let left = startLeft, top = startTop, w = startW, h = startH;
-        if(corner==='se'){ w = startW + dx; h = startH + dy; }
-        if(corner==='sw'){ w = startW - dx; h = startH + dy; left = startLeft + dx; }
-        if(corner==='ne'){ w = startW + dx; h = startH - dy; top  = startTop  + dy; }
-        if(corner==='nw'){ w = startW - dx; h = startH - dy; left = startLeft + dx; top = startTop + dy; }
-
-        // Ограничения минимального размера
-        w = Math.max(60, w); h = Math.max(40, h);
-
-        el.style.left = left + 'px';
-        el.style.top  = top  + 'px';
-        el.style.width = w + 'px';
-        el.style.height= h + 'px';
+    // Скачивание
+    downloadBtn.addEventListener('click', () => {
+      if (!preview.src) {
+        alert("Сначала загрузите картинку!");
+        return;
       }
-    }
-    function onUp(){
-      drag = false; resize = false; corner=null;
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    }
-  }
-
-  makeDraggableResizable(slot);
-  makeDraggableResizable(textBox);
-
-  // Toggle guides
-  let guides = true;
-  function applyGuides(){
-    [slot, textBox].forEach(el=>{
-      el.classList.toggle('resizable', guides);
-      el.querySelectorAll('.handle').forEach(h=>h.style.display = guides ? 'block':'none');
-      el.style.outline = guides ? '1px dashed #5cc8ff' : 'none';
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      img.src = preview.src;
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const r = Math.min(parseInt(radius.value), Math.min(img.width, img.height) / 2);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(r, 0);
+        ctx.lineTo(img.width - r, 0);
+        ctx.quadraticCurveTo(img.width, 0, img.width, r);
+        ctx.lineTo(img.width, img.height - r);
+        ctx.quadraticCurveTo(img.width, img.height, img.width - r, img.height);
+        ctx.lineTo(r, img.height);
+        ctx.quadraticCurveTo(0, img.height, 0, img.height - r);
+        ctx.lineTo(0, r);
+        ctx.quadraticCurveTo(0, 0, r, 0);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, 0, 0);
+        ctx.restore();
+        const link = document.createElement("a");
+        link.download = "insta-tool.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      };
     });
-  }
-  toggleGuidesBtn.addEventListener('click', ()=>{ guides = !guides; applyGuides(); });
-  applyGuides();
-
-  // Reset positions
-  resetBtn.addEventListener('click', ()=>{
-    slot.style.left='80px'; slot.style.top='120px'; slot.style.width='600px'; slot.style.height='360px';
-    textBox.style.left='100px'; textBox.style.top='520px'; textBox.style.width='auto'; textBox.style.height='auto';
-  });
-
-  // Init: пустая сцена — чёрный фон
-  baseImg.style.background = '#000';
-})();
-</script>
+  </script>
 </body>
 </html>
