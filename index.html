@@ -5,142 +5,73 @@
   <title>NeuroStep Redactor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;900&family=Poppins:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg:#0f1220; --panel:#151a2e; --panel-2:#0e1326;
-      --text:#e8ecff; --muted:#a0a8c8; --accent:#6ae1ff; --accent-2:#9b6bff;
-      --danger:#ff5d7a; --line:#222744;
-    }
-    body { margin:0; font:14px "Montserrat", sans-serif; color:var(--text);
-           background:linear-gradient(180deg,#0c1124 0%,#0a0f20 100%);
+    body { margin:0; font:14px "Montserrat",sans-serif; background:#0a0f20; color:#fff;
            display:flex; height:100vh; overflow:hidden; gap:12px; padding:12px; }
-    aside { width:340px; min-width:320px; overflow:auto; background:var(--panel);
-            border:1px solid var(--line); border-radius:12px; padding:12px; }
-    main { flex:1; display:flex; gap:12px; min-width:0; }
-    .stage { flex:1; display:flex; align-items:center; justify-content:center;
-             border:1px solid var(--line); border-radius:12px;
-             background:#0a0f22; position:relative; overflow:auto; }
+    aside { width:340px; background:#151a2e; padding:12px; border-radius:12px; overflow:auto; }
+    main { flex:1; display:flex; gap:12px; }
+    .stage { flex:1; display:flex; align-items:center; justify-content:center; background:#0c1124;
+             border-radius:12px; border:1px solid #333; }
     canvas { background:#111728; border-radius:10px; }
-    .slides { width:300px; background:var(--panel-2); border:1px solid var(--line);
-              border-radius:12px; padding:12px; overflow:auto; }
-    h2 { font-size:13px; text-transform:uppercase; margin:16px 0 8px; color:var(--muted); }
-    h1 { font-size:16px; margin:0 0 10px; }
-    .row { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
-    .btn { padding:6px 10px; border:1px solid var(--line); background:#0b1123;
-           border-radius:6px; cursor:pointer; font-size:13px; }
-    .btn:hover { border-color:#334; }
-    .btn.primary { background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#000; font-weight:700; }
-    .btn.danger { background:#2a0f16; border-color:#4e1c28; color:#ffc9d5; }
-    .toggle.active { outline:2px solid var(--accent); }
-    .hint { font-size:12px; color:var(--muted); }
-    input[type=file] { display:none; }
-    select,input[type=range],input[type=number] { width:100%; background:#0b1123; border:1px solid var(--line); border-radius:6px; color:var(--text); padding:4px; }
-    .effect-label { font-size:12px; color:var(--muted); margin-top:-6px; }
-    @media (max-width:768px) { aside {display:none} .slides{width:100%} main{flex-direction:column} }
+    .btn { padding:6px 10px; border:1px solid #333; background:#0b1123; border-radius:6px;
+           cursor:pointer; font-size:13px; color:#fff; }
+    .btn:hover { border-color:#666; }
+    .btn.primary { background:linear-gradient(90deg,#6ae1ff,#9b6bff); color:#000; font-weight:700; }
+    .row { display:flex; gap:12px; margin:8px 0; flex-wrap:wrap; }
+    .btn.active { outline:2px solid #6ae1ff; }
+    .hint { font-size:11px; color:#aaa; margin-top:2px; }
   </style>
 </head>
 <body>
   <aside>
     <h1>NeuroStep Redactor</h1>
-    <div class="hint">Редактор для каруселей и сторис</div>
+    <div class="hint">Редактор для Instagram-каруселей</div>
 
-    <h2>Фон и картинки</h2>
+    <h2>Фон</h2>
     <div class="row">
       <button id="blackBg" class="btn">Чёрный фон</button>
       <label class="btn"><input id="bgPhoto" type="file" accept="image/*">Фото как фон</label>
     </div>
-    <div class="row">
-      <label class="btn"><input id="mainImg" type="file" accept="image/*">Картинка</label>
-      <label class="btn"><input id="pngFile" type="file" accept="image/png">PNG-элемент</label>
-      <label class="btn"><input id="logoFile" type="file" accept="image/png">Логотип</label>
-    </div>
-    <div class="row">
-      <select id="gradient">
-        <option value="none">Градиент: нет</option>
-        <option value="black-up">Чёрный→прозрачный (вверх)</option>
-        <option value="black-down">Чёрный→прозрачный (вниз)</option>
-      </select>
-    </div>
 
     <h2>Текст</h2>
-    <div class="row">
-      <button id="addTitle" class="btn">Заголовок</button>
-      <button id="addCaption" class="btn">Caption</button>
-    </div>
-    <div class="row">
-      <select id="fontFamily"><option>Montserrat</option><option>Poppins</option><option>Roboto</option></select>
-      <select id="fontColor"><option value="#fff">Белый</option><option value="#000">Чёрный</option></select>
-    </div>
-    <div class="row"><input id="textSize" type="range" min="16" max="160" value="64"></div>
-    <div class="row"><button id="boldBtn" class="btn">Жирный</button><button id="italicBtn" class="btn">Курсив</button></div>
-    <div class="row"><input id="letterSpace" type="range" min="-5" max="20" value="0"></div>
-    <div class="row"><input id="lineHeight" type="range" min="1" max="2" step="0.1" value="1.2"></div>
-
-    <h2>Эффекты: Текст</h2>
-    <div class="row">
-      <button class="btn toggle effBtn" data-eff="fade">Fade-in</button>
-      <div class="effect-label">Для заголовков</div>
-    </div>
-    <div class="row">
-      <button class="btn toggle effBtn" data-eff="slide">Slide-up</button>
-      <div class="effect-label">Для caption</div>
-    </div>
-    <div class="row">
-      <button class="btn toggle effBtn" data-eff="pulse">Soft pulse</button>
-      <div class="effect-label">Акцентные слова</div>
-    </div>
+    <div class="row"><button id="addTitle" class="btn">Заголовок</button></div>
+    <div class="row"><button id="addCaption" class="btn">Caption</button></div>
 
     <h2>Эффекты: Объекты</h2>
     <div class="row">
-      <button class="btn toggle effBtn" data-eff="parallax">Parallax drift</button>
-      <div class="effect-label">Фон/круги (глубина)</div>
+      <div>
+        <button class="btn effBtn" data-eff="parallax">Parallax</button>
+        <div class="hint">Фоновые элементы (круги, паттерны)</div>
+      </div>
+      <div>
+        <button class="btn effBtn" data-eff="float">Float</button>
+        <div class="hint">PNG-объекты, лёгкое «парение»</div>
+      </div>
+      <div>
+        <button class="btn effBtn" data-eff="zoom">Zoom</button>
+        <div class="hint">Главная картинка (живой кадр)</div>
+      </div>
     </div>
     <div class="row">
-      <button class="btn toggle effBtn" data-eff="float">Float</button>
-      <div class="effect-label">PNG-элементы</div>
-    </div>
-    <div class="row">
-      <button class="btn toggle effBtn" data-eff="zoom">Soft zoom</button>
-      <div class="effect-label">Главная картинка</div>
-    </div>
-    <div class="row">
-      <button class="btn toggle effBtn" data-eff="glow">Glow pulse</button>
-      <div class="effect-label">Круги/фоновые элементы</div>
-    </div>
-    <div class="row">
-      <button class="btn toggle effBtn" data-eff="tilt">Tilt</button>
-      <div class="effect-label">Лого/отдельные детали</div>
-    </div>
-    <div class="row">
-      <button class="btn toggle effBtn" data-eff="grain">Grain flicker</button>
-      <div class="effect-label">Фон (лёгкая плёнка)</div>
-    </div>
-
-    <h2>Слои</h2>
-    <div class="row">
-      <button id="bringFront" class="btn">На передний</button>
-      <button id="sendBack" class="btn">Назад</button>
-      <button id="delObj" class="btn danger">Удалить</button>
+      <div>
+        <button class="btn effBtn" data-eff="glow">Glow</button>
+        <div class="hint">Декоративные круги/градиенты</div>
+      </div>
+      <div>
+        <button class="btn effBtn" data-eff="tilt">Tilt</button>
+        <div class="hint">Логотип или ключевой объект</div>
+      </div>
+      <div>
+        <button class="btn effBtn" data-eff="grain">Grain</button>
+        <div class="hint">Фон (лёгкая плёнка)</div>
+      </div>
     </div>
 
-    <h2>Разметка</h2>
+    <h2>История</h2>
     <div class="row">
-      <button id="toggleSafe" class="btn toggle">Safe-zones</button>
-      <button id="toggleGrid" class="btn toggle">Сетка</button>
-    </div>
-
-    <h2>Слайды</h2>
-    <div class="row">
-      <button id="addSlide" class="btn">Добавить</button>
-      <button id="dupSlide" class="btn">Дублировать</button>
-      <button id="copyPrev" class="btn">Копировать</button>
-      <button id="delSlide" class="btn danger">Удалить</button>
-    </div>
-    <div class="row">
-      <button id="undoBtn" class="btn">Undo</button>
-      <button id="redoBtn" class="btn">Redo</button>
+      <button id="undoBtn" class="btn">⬅️</button>
+      <button id="redoBtn" class="btn">➡️</button>
     </div>
 
     <h2>Экспорт</h2>
@@ -149,36 +80,133 @@
       <button id="exportJPG" class="btn primary">JPEG</button>
     </div>
     <div class="row">
-      <input id="duration" type="number" min="3" max="15" value="8">
+      <input id="duration" type="number" min="3" max="15" value="8" style="width:80px">
       <button id="exportWebM" class="btn primary">WebM</button>
     </div>
   </aside>
 
   <main>
-    <div class="stage">
-      <canvas id="cvs"></canvas>
-    </div>
-    <section class="slides"><h2>Превью</h2><div id="slidesList"></div></section>
+    <div class="stage"><canvas id="cvs"></canvas></div>
   </main>
 
 <script>
-// JS упрощён для MVP, основные функции: фон, текст, эффекты, слои, экспорт
-const App={canvas:null,W:1080,H:1350,slides:[],currentSlide:0,history:[],redo:[]};
+const App={canvas:null,W:1080,H:1350,history:[],redo:[],animating:false};
+
 function init(){
-  App.canvas=new fabric.Canvas('cvs',{backgroundColor:'#101427',preserveObjectStacking:true});
-  setFormat(1080,1350); newSlide(true); fitToViewport(); requestAnimationFrame(tick);
+  App.canvas=new fabric.Canvas('cvs',{preserveObjectStacking:true});
+  setFormat(1080,1350);
+
+  const saved=localStorage.getItem("ns_project");
+  if(saved){ App.canvas.loadFromJSON(saved,()=>App.canvas.renderAll()); }
+
+  App.canvas.on('object:modified',()=>{addHistory();saveProject();});
+  App.canvas.on('object:added',()=>{addHistory();saveProject();});
+  App.canvas.on('object:removed',()=>{addHistory();saveProject();});
+
+  requestAnimationFrame(tick);
+
+  // обработка кнопок эффектов
+  document.querySelectorAll('.effBtn').forEach(btn=>{
+    btn.onclick=()=>{
+      const eff=btn.dataset.eff;
+      const obj=App.canvas.getActiveObject();
+      if(!obj) return;
+      if(obj.nsEffect===eff){ obj.nsEffect=null; btn.classList.remove('active'); }
+      else{ obj.nsEffect=eff; updateEffectButtons(); }
+      App.canvas.renderAll();
+    };
+  });
+
+  App.canvas.on('selection:created',updateEffectButtons);
+  App.canvas.on('selection:updated',updateEffectButtons);
+  App.canvas.on('selection:cleared',()=>document.querySelectorAll('.effBtn').forEach(b=>b.classList.remove('active')));
 }
-function setFormat(w,h){App.W=w;App.H=h;App.canvas.setWidth(w);App.canvas.setHeight(h);}
-function fitToViewport(){const s=Math.min(window.innerWidth/(App.W+400),window.innerHeight/(App.H+200),1);App.canvas.setZoom(s);}
-function newSlide(init){const slide={json:"",thumb:""};App.slides.push(slide);App.currentSlide=App.slides.length-1;App.canvas.clear();}
-function tick(){requestAnimationFrame(tick);App.canvas.getObjects().forEach(o=>{if(!o.nsEffect)return;const t=Date.now()/1000;
-  if(o.nsEffect.parallax){o.left+=(Math.sin(t)/100);o.top+=(Math.cos(t)/100);o.dirty=true;}
-  if(o.nsEffect.float){o.top+=(Math.sin(t*2)/200);o.dirty=true;}
-  if(o.nsEffect.zoom){o.scaleX=1+Math.sin(t)/200;o.scaleY=o.scaleX;o.dirty=true;}
-  if(o.nsEffect.glow){o.shadow=`rgba(255,255,255,${0.3+0.2*Math.sin(t*3)}) 0 0 20px`;o.dirty=true;}
-  if(o.nsEffect.tilt){o.angle=2*Math.sin(t*1.5);o.dirty=true;}
-  if(o.nsEffect.grain){o.opacity=0.9+0.05*Math.sin(t*5);o.dirty=true;}
-});App.canvas.requestRenderAll();}
+function setFormat(w,h){ App.W=w;App.H=h; App.canvas.setWidth(w);App.canvas.setHeight(h); }
+
+function updateEffectButtons(){
+  const obj=App.canvas.getActiveObject();
+  document.querySelectorAll('.effBtn').forEach(b=>{
+    if(obj && obj.nsEffect===b.dataset.eff) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+}
+
+// ===== История =====
+function addHistory(){ App.history.push(App.canvas.toJSON()); if(App.history.length>20) App.history.shift(); App.redo=[]; }
+function undo(){ if(App.history.length>1){ const s=App.history.splice(App.history.length-2,1)[0]; App.redo.push(App.canvas.toJSON()); App.canvas.loadFromJSON(s,()=>App.canvas.renderAll()); saveProject(); } }
+function redo(){ if(App.redo.length>0){ const s=App.redo.pop(); App.history.push(s); App.canvas.loadFromJSON(s,()=>App.canvas.renderAll()); saveProject(); } }
+
+// ===== Сохранение =====
+function saveProject(){ localStorage.setItem("ns_project",JSON.stringify(App.canvas.toJSON())); }
+
+// ===== Эффекты =====
+function tick(){
+  const t=Date.now()/1000;
+  App.canvas.getObjects().forEach(o=>{
+    if(!o.nsEffect) return;
+    if(o.nsEffect==="parallax"){ o.left+=(Math.sin(t)/50); o.top+=(Math.cos(t)/50); }
+    if(o.nsEffect==="float"){ o.top+=(Math.sin(t*2)/100); }
+    if(o.nsEffect==="zoom"){ o.scaleX=1+Math.sin(t)/100; o.scaleY=o.scaleX; }
+    if(o.nsEffect==="glow"){ o.shadow=`rgba(255,255,255,${0.3+0.2*Math.sin(t*3)}) 0 0 20px`; }
+    if(o.nsEffect==="tilt"){ o.angle=2*Math.sin(t*1.5); }
+    if(o.nsEffect==="grain"){ o.opacity=0.9+0.05*Math.sin(t*5); }
+  });
+  if(App.animating) App.canvas.renderAll();
+  requestAnimationFrame(tick);
+}
+
+// ===== UI =====
+document.getElementById('blackBg').onclick=()=>{
+  const rect=new fabric.Rect({left:0,top:0,width:App.W,height:App.H,fill:'#000'});
+  App.canvas.add(rect); App.canvas.sendToBack(rect); addHistory(); saveProject();
+};
+document.getElementById('bgPhoto').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>fabric.Image.fromURL(r.result,img=>{
+    img.scaleToWidth(App.W); img.scaleToHeight(App.H);
+    img.set({left:0,top:0}); App.canvas.add(img); App.canvas.sendToBack(img);
+    App.canvas.renderAll(); addHistory(); saveProject();
+  });
+  r.readAsDataURL(f);
+};
+document.getElementById('addTitle').onclick=()=>{
+  const t=new fabric.Textbox("Заголовок",{left:App.W/2,top:100,fontSize:64,fill:"#fff",originX:"center"});
+  App.canvas.add(t); addHistory(); saveProject();
+};
+document.getElementById('addCaption').onclick=()=>{
+  const t=new fabric.Textbox("Caption",{left:App.W/2,top:App.H-100,fontSize:32,fill:"#fff",originX:"center"});
+  App.canvas.add(t); addHistory(); saveProject();
+};
+document.getElementById('undoBtn').onclick=undo;
+document.getElementById('redoBtn').onclick=redo;
+
+// Экспорт
+document.getElementById('exportPNG').onclick=()=>{
+  const url=App.canvas.toDataURL({format:'png'});
+  const a=document.createElement('a'); a.href=url; a.download='slide.png'; a.click();
+};
+document.getElementById('exportJPG').onclick=()=>{
+  const url=App.canvas.toDataURL({format:'jpeg',quality:0.9});
+  const a=document.createElement('a'); a.href=url; a.download='slide.jpg'; a.click();
+};
+document.getElementById('exportWebM').onclick=()=>{
+  const duration=parseInt(document.getElementById('duration').value)||8;
+  const canvasEl=document.getElementById('cvs');
+  const stream=canvasEl.captureStream(30);
+  const rec=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9'});
+  const chunks=[];
+  rec.ondataavailable=e=>chunks.push(e.data);
+  rec.onstop=()=>{
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='slide.webm'; a.click();
+  };
+  App.animating=true;
+  rec.start();
+  setTimeout(()=>{rec.stop();App.animating=false;},duration*1000);
+};
+
 init();
 </script>
 </body>
